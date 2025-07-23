@@ -6,8 +6,7 @@
     "dev": "bun --bun next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "install": "bun install"
+    "lint": "next lint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
