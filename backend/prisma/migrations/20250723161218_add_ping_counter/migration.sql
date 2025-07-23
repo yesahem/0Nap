@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "UrlPing" ADD COLUMN     "pingCount" INTEGER NOT NULL DEFAULT 0;
