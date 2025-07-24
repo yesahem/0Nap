@@ -71,6 +71,10 @@ curl -X DELETE http://localhost:4000/api/urls/URL_ID_HERE \
   -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
 ```
 
+
+
+
+
 ## What You Should See
 
 1. **Console logs** showing scheduled pings and successful requests
