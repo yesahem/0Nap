@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { addUrl, getUrls, deleteUrl } from "../controllers/urlController";
-import { validateAddUrl } from "../middlewares/validateRequest";
-import { authenticate } from "../middlewares/auth";
+import { addUrl, getUrls, deleteUrl } from "../controllers/urlController.js";
+import { validateAddUrl } from "../middlewares/validateRequest.js";
+import { authenticate } from "../middlewares/auth.js";
 
 const router = Router();
 

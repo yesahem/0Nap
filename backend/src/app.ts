@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
-import urlRoutes from "./routes/urlRoutes";
-import userRoutes from "./routes/userRoutes";
-import { errorHandler } from "./middlewares/errorHandler";
-import { scheduleAll } from "./services/schedulerService";
+import urlRoutes from "./routes/urlRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
+import { scheduleAll } from "./services/schedulerService.js";
 
 const app = express();
 

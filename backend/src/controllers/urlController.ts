@@ -1,7 +1,7 @@
 import type { Request as ExpressRequest, Response, NextFunction } from "express";
-import prisma from "../prisma/client";
-import { parse, URL } from "url";
-import { scheduleUrl, unscheduleUrl } from "../services/schedulerService";
+import prisma from "../prisma/client.js";
+import { URL } from "url";
+import { scheduleUrl, unscheduleUrl } from "../services/schedulerService.js";
 
 interface AuthRequest extends ExpressRequest {
   user?: { id: string };

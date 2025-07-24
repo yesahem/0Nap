@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import prisma from "../prisma/client";
+import prisma from "../prisma/client.js";
 
 const activeTasks: Record<string, ReturnType<typeof cron.schedule>> = {};
 
