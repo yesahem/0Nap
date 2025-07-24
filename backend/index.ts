@@ -1,1 +1,1 @@
-console.log("Hello via Bun!");
+console.log("Hello from 0Nap");
