@@ -1,41 +1,32 @@
-name : Build and Deploy backend
+name: Build and Deploy backend
 
 on: 
   pull_request:
     branches:
       - main
-      # can add more branches here later
-  # push:
-  #   branches:
-  #     - main
-
-
 
 jobs:
   build:
     name: Build the Project
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: backend
-        
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '23'
 
-      - name: Build backend
-        run: cd backend/
-
       - name: Install Dependencies
         run: npm install
 
-      - name: Generate prisma client
+      - name: Generate Prisma Client
         run: npx prisma generate
 
       - name: Run Build
         run: npm run build
-
-
