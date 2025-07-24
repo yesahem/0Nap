@@ -1,13 +1,13 @@
 name : Build and Deploy backend
 
 on: 
-  # pull_request:
-  #   branches:
-  #     - main
-      # can add more branches here later
-  push:
+  pull_request:
     branches:
       - main
+      # can add more branches here later
+  # push:
+  #   branches:
+  #     - main
 
 
 
