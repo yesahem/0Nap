@@ -72,7 +72,7 @@ export function LandingHeader() {
               /* Authenticated User Menu */
               <div className="flex items-center space-x-3">
                 <Link href="/dashboard" className="hidden sm:block">
-                  <Button variant="ghost" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                  <Button variant="ghost" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
                     Dashboard
                   </Button>
                 </Link>
@@ -121,7 +121,7 @@ export function LandingHeader() {
               /* Unauthenticated Menu */
               <>
                 <Link href="/signin" className="hidden sm:block">
-                  <Button variant="ghost" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                  <Button variant="ghost" className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer">
                     Sign In
                   </Button>
                 </Link>
