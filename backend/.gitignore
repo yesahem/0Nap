@@ -28,6 +28,10 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .cache
 *.tsbuildinfo
 
+# pnpm
+.pnpm-debug.log*
+.pnpm-store/
+
 # IntelliJ based IDEs
 .idea
 
