@@ -28,4 +28,15 @@ jobs:
           run: |
             docker pull shishuranjan/0nap-backend:latest
             docker run -d -p 3000:3000 shishuranjan/0nap-backend:latest
-          
+        
+        - name : Deploy to EC2
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{ secrets.SSH_HOST }}
+            username: ${{ secrets.SSH_HOSTNAME }}
+            key: ${{ secrets.SSH_KEY }}
+            script: |
+              sudo docker pull shishuranjan/0nap-backend:latest
+              sudo docker stop 0nap-backend || true
+              sudo docker rm 0nap-backend || true
+              sudo docker run -d --name 0nap-backend -p 4000:4000 shishuranjan/0nap-backend:latest
