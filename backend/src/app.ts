@@ -21,6 +21,9 @@ app.use(limiter);
 
 app.use("/api/users", userRoutes);
 app.use("/api/urls", urlRoutes);
+app.get("/health", (req, res) => {
+  res.status(200).json({ message: "OK" });
+});
 
 app.use(errorHandler);
 
