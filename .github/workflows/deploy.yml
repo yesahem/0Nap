@@ -20,7 +20,7 @@ jobs:
         - name: Build and Push docker image
           uses: docker/build-push-action@v5
           with:
-            context: ./backend
+            context: .
             file: ./backend/Dockerfile.backend
             push: true
             tags: shishuranjan/0nap-backend:latest
