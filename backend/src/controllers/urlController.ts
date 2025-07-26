@@ -37,9 +37,13 @@ export const addUrl = async (req: AuthRequest, res: Response, next: NextFunction
   }
 };
 
-export const getUrls = async (_req: AuthRequest, res: Response, next: NextFunction) => {
+export const getUrls = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const urls = await prisma.urlPing.findMany();
+    const urls = await prisma.urlPing.findMany({
+      where: {
+        userId: req.user?.id,
+      },
+    });
     res.json(urls);
   } catch (err) {
     next(err);
