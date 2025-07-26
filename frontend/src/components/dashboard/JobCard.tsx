@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Job, intervalOptions } from '@/types/job';
 import { useJobStore } from '@/store/jobStore';
+import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -43,6 +44,7 @@ interface JobCardProps {
 export function JobCard({ job, index }: JobCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { deleteJob, isLoading } = useJobStore();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
 
   const handleCardClick = () => {
@@ -52,6 +54,11 @@ export function JobCard({ job, index }: JobCardProps) {
   const intervalLabel = intervalOptions.find(opt => opt.value === job.interval)?.label || job.interval;
 
   const handleDelete = async () => {
+    if (!isAuthenticated) {
+      toast.error('You must be authenticated to delete a monitor');
+      return;
+    }
+
     try {
       await deleteJob(job.id);
       toast.success('Monitor deleted successfully');
@@ -61,13 +68,18 @@ export function JobCard({ job, index }: JobCardProps) {
     }
   };
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: Date | undefined | null) => {
+    if (!date) return 'Never';
+    
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Invalid date';
+    
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-    }).format(new Date(date));
+    }).format(dateObj);
   };
 
   // Extract domain from URL for better display

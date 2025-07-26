@@ -11,6 +11,67 @@ const api = axios.create({
   },
 });
 
+// Function to get current token from auth store or sessionStorage
+const getCurrentToken = (): string | null => {
+  // Import dynamically to avoid circular dependencies
+  try {
+    const { useAuthStore } = require('@/store/authStore');
+    const store = useAuthStore.getState();
+    
+    // Return token from store if available
+    if (store.currentToken) {
+      return store.currentToken;
+    }
+    
+    // Fallback to sessionStorage (for page reload scenarios)
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('auth-token');
+    }
+    
+    return null;
+  } catch {
+    // Final fallback to sessionStorage if store is not available
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('auth-token');
+    }
+    return null;
+  }
+};
+
+// Request interceptor to automatically add Bearer token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = getCurrentToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle auth errors globally
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // If we get 401 Unauthorized, clear auth state
+    if (error.response?.status === 401) {
+      try {
+        const { useAuthStore } = require('@/store/authStore');
+        const store = useAuthStore.getState();
+        store.signOut();
+      } catch {
+        // Handle error silently if auth store is not available
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Types for backend responses
 export interface BackendUser {
   id: string;
@@ -67,38 +128,29 @@ export const authApi = {
   },
 };
 
-// URLs API calls
+// URLs API calls (token now added automatically by interceptor)
 export const urlsApi = {
   // Get all URLs for authenticated user
-  getUrls: async (token: string): Promise<BackendUrl[]> => {
+  getUrls: async (): Promise<BackendUrl[]> => {
     const response: AxiosResponse<BackendUrl[]> = await api.get(
-      API_CONFIG.ENDPOINTS.URLS,
-      {
-        headers: getAuthHeaders(token),
-      }
+      API_CONFIG.ENDPOINTS.URLS
     );
     return response.data;
   },
 
   // Add new URL
-  addUrl: async (token: string, data: { url: string; interval: number }): Promise<BackendUrl> => {
+  addUrl: async (data: { url: string; interval: number }): Promise<BackendUrl> => {
     const response: AxiosResponse<BackendUrl> = await api.post(
       API_CONFIG.ENDPOINTS.URLS,
-      data,
-      {
-        headers: getAuthHeaders(token),
-      }
+      data
     );
     return response.data;
   },
 
   // Delete URL
-  deleteUrl: async (token: string, urlId: string): Promise<void> => {
+  deleteUrl: async (urlId: string): Promise<void> => {
     await api.delete(
-      API_CONFIG.ENDPOINTS.URL_BY_ID(urlId),
-      {
-        headers: getAuthHeaders(token),
-      }
+      API_CONFIG.ENDPOINTS.URL_BY_ID(urlId)
     );
   },
 };

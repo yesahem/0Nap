@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Link as LinkIcon, Loader2 } from 'lucide-react';
 import { useJobStore } from '@/store/jobStore';
+import { useAuthStore } from '@/store/authStore';
 import { intervalOptions } from '@/types/job';
 import { toast } from 'sonner';
 
@@ -19,6 +20,7 @@ export function AddJobForm() {
   const [isValidUrl, setIsValidUrl] = useState(true);
   
   const { addJob, isLoading } = useJobStore();
+  const { isAuthenticated } = useAuthStore();
 
   const validateUrl = (value: string) => {
     if (!value) {
@@ -46,6 +48,11 @@ export function AddJobForm() {
     
     if (!url || !interval || !isValidUrl) {
       toast.error('Please fill all fields with valid data');
+      return;
+    }
+
+    if (!isAuthenticated) {
+      toast.error('You must be authenticated to add a monitoring job');
       return;
     }
 

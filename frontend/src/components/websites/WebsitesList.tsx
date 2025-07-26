@@ -3,17 +3,18 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useJobStore } from '@/store/jobStore';
+import { useAuthStore } from '@/store/authStore';
 import { WebsiteCard } from './WebsiteCard';
 import { Loader2, Globe, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Base Smart Polling Configuration (will be scaled based on user's shortest ping interval)
+// Base Smart Polling Configuration - Reduced frequency to minimize backend load
 const BASE_POLLING_INTERVALS = {
-  ACTIVE: 5 * 60 * 1000,        // 5 minutes when user is actively using the app
-  BACKGROUND: 7 * 60 * 1000,    // 7 minutes when tab is in background
-  IDLE: 10 * 60 * 1000,         // 10 minutes when user is idle (no activity for 5+ minutes)
-  INACTIVE: 20 * 60 * 1000,     // 20 minutes when completely inactive (no activity for 15+ minutes)
+  ACTIVE: 30 * 60 * 1000,       // 30 minutes when user is actively using the app
+  BACKGROUND: 60 * 60 * 1000,   // 1 hour when tab is in background
+  IDLE: 2 * 60 * 60 * 1000,     // 2 hours when user is idle 
+  INACTIVE: 4 * 60 * 60 * 1000, // 4 hours when completely inactive
 } as const;
 
 const USER_ACTIVITY_TIMEOUT = 2 * 60 * 1000;  // 2 minutes
@@ -29,7 +30,8 @@ const intervalToMinutes = (interval: string): number => {
 };
 
 export function WebsitesList() {
-  const { jobs, isLoading, error, fetchJobs } = useJobStore();
+  const { jobs, isLoading, error, fetchJobs, clearJobs } = useJobStore();
+  const { isAuthenticated } = useAuthStore();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -138,6 +140,11 @@ export function WebsitesList() {
   }, []);
 
   const refreshData = useCallback(async (showRefreshState = false) => {
+    if (!isAuthenticated) {
+      clearJobs();
+      return;
+    }
+    
     if (showRefreshState) setIsRefreshing(true);
     try {
       await fetchJobs();
@@ -147,11 +154,17 @@ export function WebsitesList() {
     } finally {
       if (showRefreshState) setIsRefreshing(false);
     }
-  }, [fetchJobs]);
+  }, [fetchJobs, isAuthenticated, clearJobs]);
 
   // Initial data load
   useEffect(() => {
     const loadJobs = async () => {
+      if (!isAuthenticated) {
+        clearJobs();
+        setIsInitialLoad(false);
+        return;
+      }
+      
       try {
         await fetchJobs();
         setLastUpdated(new Date());
@@ -163,7 +176,7 @@ export function WebsitesList() {
     };
 
     loadJobs();
-  }, [fetchJobs]);
+  }, [fetchJobs, isAuthenticated, clearJobs]);
 
   // Tab visibility detection
   useEffect(() => {
@@ -207,56 +220,27 @@ export function WebsitesList() {
     refreshData(true);
   }, [refreshData]);
 
-  // Smart polling with dynamic intervals
+  // Smart polling with dynamic intervals - DISABLED to reduce backend load
+  // Users can manually refresh data when needed
   useEffect(() => {
     if (isInitialLoad) return;
 
-    const startSmartPolling = () => {
-      // Clear existing interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-
-      const optimalInterval = getOptimalPollingInterval();
-      setCurrentInterval(optimalInterval);
-
-      console.log(`🔄 Smart Polling: Setting interval to ${optimalInterval / 1000}s (${
-        optimalInterval === adaptiveIntervals.ACTIVE ? 'ACTIVE' :
-        optimalInterval === adaptiveIntervals.BACKGROUND ? 'BACKGROUND' :
-        optimalInterval === adaptiveIntervals.IDLE ? 'IDLE' : 'INACTIVE'
-      })`);
-
-      intervalRef.current = setInterval(() => {
-        refreshData(false);
-        
-        // Re-evaluate interval after each refresh
-        const newInterval = getOptimalPollingInterval();
-        if (newInterval !== optimalInterval) {
-          startSmartPolling(); // Restart with new interval
-        }
-      }, optimalInterval);
-    };
-
-    startSmartPolling();
+    // Polling is disabled - data only refreshes:
+    // 1. On initial page load
+    // 2. When user manually clicks refresh
+    // 3. When tab becomes visible (if user was away)
+    
+    console.log(`🔄 Auto-polling disabled - data refreshes manually only`);
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isInitialLoad, getOptimalPollingInterval, adaptiveIntervals]);
+  }, [isInitialLoad]);
 
-  // Re-evaluate polling when tab visibility or activity changes
-  useEffect(() => {
-    if (!isInitialLoad) {
-      const newInterval = getOptimalPollingInterval();
-      if (newInterval !== currentInterval) {
-        // Force restart polling with new interval
-        const event = new Event('restart-polling');
-        window.dispatchEvent(event);
-      }
-    }
-  }, [isTabVisible, lastActivity, currentInterval, getOptimalPollingInterval, isInitialLoad, adaptiveIntervals, refreshData]);
+  // Polling re-evaluation disabled since auto-polling is turned off
+  // Data refreshes only on manual refresh or tab visibility change
 
   const formatLastUpdated = (date: Date | null) => {
     if (!date) return '';

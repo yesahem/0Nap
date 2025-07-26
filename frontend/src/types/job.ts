@@ -19,7 +19,6 @@ export interface JobStats {
 // Interval options for the dropdown (frontend display)
 export const intervalOptions = [
   { value: '12min', label: 'Every 12 minutes' },
-  { value: '15min', label: 'Every 15 minutes' },
   { value: '30min', label: 'Every 30 minutes' },
   { value: '1hour', label: 'Every hour' },
   { value: '2hour', label: 'Every 2 hours' },
@@ -32,7 +31,7 @@ export const intervalOptions = [
   { value: '120hour', label: 'Every 5 days' },
   { value: '144hour', label: 'Every 6 days' },
   { value: '168hour', label: 'Every 7 days' },
-  { value: '192hour', label: 'Every 8 days' },
+
 ];
 
 // Helper function to convert frontend interval to backend minutes
@@ -40,7 +39,6 @@ export const intervalToMinutes = (interval: string): number => {
   switch (interval) {
   
     case '12min': return 12;
-    case '15min': return 15;
     case '30min': return 30;
     case '1hour': return 60;
     case '2hour': return 120;
@@ -53,16 +51,23 @@ export const intervalToMinutes = (interval: string): number => {
     case '120hour': return 7200;
     case '144hour': return 8640;
     case '168hour': return 10080;
-    case '192hour': return 11520;
-    default: return 5;
+    default: return 12;
   }
 };
 
 // Helper function to convert backend minutes to frontend interval
-export const minutesToInterval = (minutes: number): string => {
-  switch (minutes) {
+export const minutesToInterval = (minutes: number | undefined | null): string => {
+  // Validate input - handle NaN, undefined, null, or non-numeric values
+  if (!minutes || isNaN(Number(minutes)) || minutes <= 0) {
+    console.warn('Invalid interval value received:', minutes);
+    return '12min'; // Default fallback
+  }
+  
+  const validMinutes = Number(minutes);
+
+  // Handle exact matches for predefined intervals
+  switch (validMinutes) {
     case 12: return '12min';
-    case 15: return '15min';
     case 30: return '30min';
     case 60: return '1hour';
     case 120: return '2hour';
@@ -75,7 +80,16 @@ export const minutesToInterval = (minutes: number): string => {
     case 7200: return '120hour';
     case 8640: return '144hour';
     case 10080: return '168hour';
-    case 11520: return '192hour';
-    default: return '5min';
+  }
+
+  // For custom intervals, create dynamic format
+  if (validMinutes < 60) {
+    return `${validMinutes}min`;
+  } else if (validMinutes < 1440) {
+    const hours = Math.round(validMinutes / 60);
+    return `${hours}hour${hours > 1 ? 's' : ''}`;
+  } else {
+    const days = Math.round(validMinutes / 1440);
+    return `${days}day${days > 1 ? 's' : ''}`;
   }
 }; 

@@ -12,22 +12,18 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
-  const { isAuthenticated, checkAuth } = useAuthStore();
+  const { isAuthenticated, initializeAuth } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     const performAuthCheck = async () => {
-      // Check authentication state
-      checkAuth();
-      
-      // Give a short delay to allow the auth state to be determined
-      setTimeout(() => {
-        setIsChecking(false);
-      }, 500);
+      // Initialize auth from sessionStorage and validate with backend
+      await initializeAuth();
+      setIsChecking(false);
     };
 
     performAuthCheck();
-  }, [checkAuth]);
+  }, [initializeAuth]);
 
   useEffect(() => {
     if (!isChecking && !isAuthenticated) {

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Job } from '@/types/job';
 import { useJobStore } from '@/store/jobStore';
+import { useAuthStore } from '@/store/authStore';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -38,9 +39,15 @@ interface WebsiteCardProps {
 
 export function WebsiteCard({ job }: WebsiteCardProps) {
   const { deleteJob } = useJobStore();
+  const { isAuthenticated } = useAuthStore();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
+    if (!isAuthenticated) {
+      toast.error('You must be authenticated to delete a website');
+      return;
+    }
+
     setIsDeleting(true);
     try {
       await deleteJob(job.id);
@@ -183,11 +190,20 @@ export function WebsiteCard({ job }: WebsiteCardProps) {
             <span className="text-xs text-gray-600 dark:text-gray-300">Added On</span>
           </div>
           <p className="text-sm font-medium text-gray-900 dark:text-white">
-            {job.createdAt.toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            })}
+            {(() => {
+              try {
+                if (!job.createdAt || isNaN(job.createdAt.getTime())) {
+                  return 'Unknown date';
+                }
+                return job.createdAt.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                });
+              } catch {
+                return 'Unknown date';
+              }
+            })()}
           </p>
         </div>
 
