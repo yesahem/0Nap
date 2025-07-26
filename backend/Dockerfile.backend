@@ -9,12 +9,6 @@ RUN npm install
 
 COPY backend/ ./
 
-# this is needed so that the database url is set in the container during build time
-# ARG DATABASE_URL
-# ENV DATABASE_URL=$DATABASE_URL
-
-# ARG JWT_SECRET
-# ENV JWT_SECRET=$JWT_SECRET
 
 RUN npx prisma generate
 
