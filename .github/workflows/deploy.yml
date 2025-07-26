@@ -42,6 +42,7 @@ jobs:
               sudo docker rm 0nap-backend || true
               sudo docker run -d \
                 -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+                -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
                 --name 0nap-backend \
                 -p 4000:4000 \
                 shishuranjan/0nap-backend:latest
