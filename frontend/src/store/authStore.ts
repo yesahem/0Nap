@@ -10,7 +10,9 @@ interface AuthStore extends AuthState {
   signOut: () => void;
   clearError: () => void;
   checkAuth: () => Promise<void>;
-  initializeAuth: () => Promise<void>;
+  initializeAuth: () => Promise<boolean>;
+  setupSessionCleanup: () => void;
+  cleanupSessionCleanup: () => void;
   currentToken: string | null;
 }
 
@@ -117,6 +119,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   signOut: () => {
+    // Clean up session cleanup listener
+    get().cleanupSessionCleanup();
+    
     // Clear token from sessionStorage and memory
     removeTokenFromSession();
     set({
@@ -175,14 +180,82 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   // Initialize auth state from sessionStorage on app start
-  initializeAuth: async () => {
+  initializeAuth: async (): Promise<boolean> => {
     const sessionToken = getTokenFromSession();
-    if (sessionToken) {
-      // Set token in memory and check if it's valid
-      set({ currentToken: sessionToken });
-      // checkAuth will validate the token with backend
-      const store = get();
-      await store.checkAuth();
+    if (!sessionToken) {
+      // No token found, user is not authenticated
+      set({ isAuthenticated: false, user: null, currentToken: null });
+      return false;
+    }
+
+    // Set token in memory and validate with backend
+    set({ currentToken: sessionToken });
+    
+    try {
+      set({ isLoading: true });
+      
+      // Import urlsApi dynamically to avoid circular dependency
+      const { urlsApi } = await import('@/services/api');
+      
+      // Try to fetch URLs to validate token
+      await urlsApi.getUrls();
+      
+      // Token is valid
+      set({ isAuthenticated: true, isLoading: false });
+      
+      // Set up session cleanup on tab/browser close
+      get().setupSessionCleanup();
+      
+      return true;
+    } catch {
+      // Token is invalid, clear everything
+      removeTokenFromSession();
+      set({
+        currentToken: null,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+      return false;
+    }
+  },
+
+  // Setup session cleanup when tab/browser is closed
+  setupSessionCleanup: () => {
+    // Remove any existing listener first
+    const existingHandler = (window as unknown as { __authCleanupHandler?: () => void }).__authCleanupHandler;
+    if (existingHandler) {
+      window.removeEventListener('beforeunload', existingHandler);
+    }
+
+    // Create new cleanup handler
+    const cleanupHandler = () => {
+      // Clear session storage when tab/browser is closed
+      removeTokenFromSession();
+      
+      // Also clear the current state
+      set({
+        currentToken: null,
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    };
+
+    // Store reference to handler for cleanup
+    (window as unknown as { __authCleanupHandler: () => void }).__authCleanupHandler = cleanupHandler;
+    
+    // Add event listener for tab/browser close
+    window.addEventListener('beforeunload', cleanupHandler);
+  },
+
+  // Clean up session cleanup listener
+  cleanupSessionCleanup: () => {
+    const windowWithHandler = window as unknown as { __authCleanupHandler?: () => void };
+    const existingHandler = windowWithHandler.__authCleanupHandler;
+    if (existingHandler) {
+      window.removeEventListener('beforeunload', existingHandler);
+      delete windowWithHandler.__authCleanupHandler;
     }
   },
 })); 

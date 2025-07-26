@@ -14,23 +14,37 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter();
   const { isAuthenticated, initializeAuth } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
+  const [authFailed, setAuthFailed] = useState(false);
 
   useEffect(() => {
     const performAuthCheck = async () => {
-      // Initialize auth from sessionStorage and validate with backend
-      await initializeAuth();
-      setIsChecking(false);
+      try {
+        // Initialize auth from sessionStorage and validate with backend
+        const isValidAuth = await initializeAuth();
+        
+        if (isValidAuth === false) {
+          setAuthFailed(true);
+          // Immediately redirect to sign in if authentication failed
+          router.push('/signin');
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setAuthFailed(true);
+        router.push('/signin');
+      } finally {
+        setIsChecking(false);
+      }
     };
 
     performAuthCheck();
-  }, [initializeAuth]);
+  }, [initializeAuth, router]);
 
   useEffect(() => {
-    if (!isChecking && !isAuthenticated) {
-      // Redirect to sign in page if not authenticated
+    // Additional safety check - if user becomes unauthenticated at any time, redirect
+    if (!isChecking && !isAuthenticated && !authFailed) {
       router.push('/signin');
     }
-  }, [isAuthenticated, isChecking, router]);
+  }, [isAuthenticated, isChecking, authFailed, router]);
 
   // Show loading spinner while checking authentication
   if (isChecking) {
@@ -46,14 +60,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Show loading if not authenticated (user will be redirected)
-  if (!isAuthenticated) {
+  // Show loading if not authenticated or auth check failed (user will be redirected)
+  if (!isAuthenticated || authFailed) {
     return (
       <GradientBackground variant="primary" className="min-h-screen">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600 dark:text-blue-400" />
-            <p className="text-gray-600 dark:text-gray-300">Redirecting to sign in...</p>
+            <p className="text-gray-600 dark:text-gray-300">
+              {authFailed ? 'Session expired. Redirecting to sign in...' : 'Redirecting to sign in...'}
+            </p>
           </div>
         </div>
       </GradientBackground>

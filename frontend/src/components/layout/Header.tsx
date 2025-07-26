@@ -1,10 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Activity, Shield, Zap, LogOut } from 'lucide-react';
+import { Activity, LogOut } from 'lucide-react';
 import { useJobStore } from '@/store/jobStore';
 import { useAuthStore } from '@/store/authStore';
-import { Badge } from '@/components/ui/badge';
+
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { useEffect } from 'react';
@@ -59,38 +59,16 @@ export function Header() {
 
           {/* Stats and User Menu */}
           <div className="flex items-center space-x-4">
-            {/* Stats */}
-            <div className="hidden md:flex items-center space-x-4">
-              <motion.div 
-                className="flex items-center space-x-2"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Shield className="h-4 w-4 text-green-500" />
-                <Badge variant="secondary" className="bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
-                  {stats.active} Active
-                </Badge>
-              </motion.div>
-              
-              <motion.div 
-                className="flex items-center space-x-2"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              >
-                <Zap className="h-4 w-4 text-blue-500" />
-                <Badge variant="secondary" className="bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
-                  {stats.total} Total
-                </Badge>
-              </motion.div>
-            </div>
-
-            {/* Mobile Stats */}
-            <div className="flex md:hidden items-center space-x-2">
-              <Badge variant="secondary" className="text-xs">
-                {stats.active}/{stats.total}
-              </Badge>
+            {/* Stats - Hidden on mobile, visible on larger screens */}
+            <div className="hidden md:flex items-center space-x-3">
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{stats.active} Active</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{stats.total} Total</span>
+              </div>
             </div>
 
             {/* Theme Toggle */}
@@ -109,28 +87,40 @@ export function Header() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg backdrop-blur-sm cursor-pointer" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{user.name || user.email.split('@')[0]}</p>
-                      <p className="w-[200px] truncate text-sm text-gray-600 dark:text-gray-300">
+                <DropdownMenuContent className="w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg backdrop-blur-sm" align="end" forceMount>
+                  <div className="flex flex-col items-center justify-center gap-2 p-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={user.avatar} alt={user.name || user.email} />
+                      <AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-600 text-white text-lg font-semibold">
+                        {user.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase() : user.email[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="text-center">
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm">
+                        {user.name || user.email.split('@')[0]}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
                         {user.email}
                       </p>
                     </div>
                   </div>
-                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                  
                   <DropdownMenuItem asChild>
-                    <Link href="/websites" className="cursor-pointer">
-                      <Activity className="mr-2 h-4 w-4" />
+                    <Link href="/websites" className="cursor-pointer px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-blue-500" />
                       <span>All Websites</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
+                  
                   <DropdownMenuItem
-                    className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                    className="cursor-pointer px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 flex items-center gap-2"
                     onClick={handleSignOut}
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut className="h-4 w-4" />
                     <span>Sign out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
