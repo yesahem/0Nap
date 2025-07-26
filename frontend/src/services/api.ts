@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { API_CONFIG, getAuthHeaders } from '@/config';
+import { API_CONFIG } from '@/config';
 import { SignInCredentials, User } from '@/types/auth';
 
 // Create axios instance with default config
@@ -11,31 +11,13 @@ const api = axios.create({
   },
 });
 
-// Function to get current token from auth store or sessionStorage
+// Function to get current token from sessionStorage (avoid circular dependencies)
 const getCurrentToken = (): string | null => {
-  // Import dynamically to avoid circular dependencies
-  try {
-    const { useAuthStore } = require('@/store/authStore');
-    const store = useAuthStore.getState();
-    
-    // Return token from store if available
-    if (store.currentToken) {
-      return store.currentToken;
-    }
-    
-    // Fallback to sessionStorage (for page reload scenarios)
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('auth-token');
-    }
-    
-    return null;
-  } catch {
-    // Final fallback to sessionStorage if store is not available
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('auth-token');
-    }
-    return null;
+  // Use sessionStorage directly to avoid circular dependency issues
+  if (typeof window !== 'undefined') {
+    return sessionStorage.getItem('auth-token');
   }
+  return null;
 };
 
 // Request interceptor to automatically add Bearer token to all requests
@@ -57,11 +39,12 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  async (error) => {
     // If we get 401 Unauthorized, clear auth state
     if (error.response?.status === 401) {
       try {
-        const { useAuthStore } = require('@/store/authStore');
+        // Use dynamic import instead of require
+        const { useAuthStore } = await import('@/store/authStore');
         const store = useAuthStore.getState();
         store.signOut();
       } catch {

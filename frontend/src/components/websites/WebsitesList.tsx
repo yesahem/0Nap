@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useJobStore } from '@/store/jobStore';
 import { useAuthStore } from '@/store/authStore';
@@ -9,25 +9,9 @@ import { Loader2, Globe, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
-// Base Smart Polling Configuration - Reduced frequency to minimize backend load
-const BASE_POLLING_INTERVALS = {
-  ACTIVE: 30 * 60 * 1000,       // 30 minutes when user is actively using the app
-  BACKGROUND: 60 * 60 * 1000,   // 1 hour when tab is in background
-  IDLE: 2 * 60 * 60 * 1000,     // 2 hours when user is idle 
-  INACTIVE: 4 * 60 * 60 * 1000, // 4 hours when completely inactive
-} as const;
+// Polling constants removed since auto-polling is disabled
 
-const USER_ACTIVITY_TIMEOUT = 2 * 60 * 1000;  // 2 minutes
-const INACTIVE_TIMEOUT = 5 * 60 * 1000;      // 5 minutes
-
-// Helper function to convert interval string to minutes
-const intervalToMinutes = (interval: string): number => {
-  const value = parseInt(interval);
-  if (interval.includes('minute') || interval.includes('min')) return value;
-  if (interval.includes('hour') || interval.includes('hr')) return value * 60;
-  if (interval.includes('day')) return value * 24 * 60;
-  return value; // fallback
-};
+// Removed intervalToMinutes helper since polling is disabled
 
 export function WebsitesList() {
   const { jobs, isLoading, error, fetchJobs, clearJobs } = useJobStore();
@@ -36,108 +20,14 @@ export function WebsitesList() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   
-  // Smart polling state
+  // Tab visibility state (used for throttled refresh on tab focus)
   const [isTabVisible, setIsTabVisible] = useState(!document.hidden);
-  const [lastActivity, setLastActivity] = useState<Date>(new Date());
-  const [currentInterval, setCurrentInterval] = useState<number>(BASE_POLLING_INTERVALS.ACTIVE);
-  const [adaptiveIntervals, setAdaptiveIntervals] = useState<{
-    ACTIVE: number;
-    BACKGROUND: number;
-    IDLE: number;
-    INACTIVE: number;
-  }>({
-    ACTIVE: BASE_POLLING_INTERVALS.ACTIVE,
-    BACKGROUND: BASE_POLLING_INTERVALS.BACKGROUND,
-    IDLE: BASE_POLLING_INTERVALS.IDLE,
-    INACTIVE: BASE_POLLING_INTERVALS.INACTIVE,
-  });
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const lastActivityRef = useRef<Date>(new Date());
 
-  // Calculate adaptive polling intervals based on user's shortest ping interval
-  const calculateAdaptiveIntervals = useCallback(() => {
-    if (jobs.length === 0) return {
-      ACTIVE: BASE_POLLING_INTERVALS.ACTIVE,
-      BACKGROUND: BASE_POLLING_INTERVALS.BACKGROUND,
-      IDLE: BASE_POLLING_INTERVALS.IDLE,
-      INACTIVE: BASE_POLLING_INTERVALS.INACTIVE,
-    };
+  // All polling-related code removed since auto-polling is disabled
 
-    // Find the shortest ping interval among all user's sites
-    const shortestIntervalMinutes = Math.min(
-      ...jobs.map(job => intervalToMinutes(job.interval))
-    );
+    // Polling functions removed since auto-polling is disabled
 
-    console.log(`📊 Shortest user ping interval: ${shortestIntervalMinutes} minutes`);
-
-    // Calculate scaling factor based on shortest interval
-    let scaleFactor = 1;
-    
-    if (shortestIntervalMinutes >= 1440) { // 1 day or more
-      scaleFactor = 120; // Very slow polling (40m, 2h, 4h, 10h)
-    } else if (shortestIntervalMinutes >= 720) { // 12 hours
-      scaleFactor = 60;  // Slow polling (20m, 1h, 2h, 5h)
-    } else if (shortestIntervalMinutes >= 360) { // 6 hours
-      scaleFactor = 30;  // Moderate polling (10m, 30m, 1h, 2.5h)
-    } else if (shortestIntervalMinutes >= 60) { // 1 hour
-      scaleFactor = 10;  // Slightly slower (3.3m, 10m, 20m, 50m)
-    } else if (shortestIntervalMinutes >= 30) { // 30 minutes
-      scaleFactor = 5;   // Moderately slower (1.7m, 5m, 10m, 25m)
-    } else if (shortestIntervalMinutes >= 10) { // 10 minutes
-      scaleFactor = 2;   // Slightly slower (40s, 2m, 4m, 10m)
-    } else {
-      scaleFactor = 1;   // Keep base intervals (20s, 1m, 2m, 5m)
-    }
-
-    const adaptiveIntervals = {
-      ACTIVE: Math.max(BASE_POLLING_INTERVALS.ACTIVE * scaleFactor, 10000), // Min 10s
-      BACKGROUND: Math.max(BASE_POLLING_INTERVALS.BACKGROUND * scaleFactor, 30000), // Min 30s
-      IDLE: Math.max(BASE_POLLING_INTERVALS.IDLE * scaleFactor, 60000), // Min 1m
-      INACTIVE: Math.max(BASE_POLLING_INTERVALS.INACTIVE * scaleFactor, 120000), // Min 2m
-    };
-
-    console.log(`⚡ Adaptive intervals (scale: ${scaleFactor}x):`, {
-      ACTIVE: `${adaptiveIntervals.ACTIVE / 1000}s`,
-      BACKGROUND: `${adaptiveIntervals.BACKGROUND / 1000}s`,
-      IDLE: `${adaptiveIntervals.IDLE / 1000}s`,
-      INACTIVE: `${adaptiveIntervals.INACTIVE / 1000}s`,
-    });
-
-    return adaptiveIntervals;
-  }, [jobs]);
-
-  // Update adaptive intervals when jobs change
-  useEffect(() => {
-    const newIntervals = calculateAdaptiveIntervals();
-    setAdaptiveIntervals(newIntervals);
-  }, [calculateAdaptiveIntervals]);
-
-  // Determine optimal polling interval based on current conditions
-  const getOptimalPollingInterval = useCallback(() => {
-    const now = new Date();
-    const timeSinceActivity = now.getTime() - lastActivityRef.current.getTime();
-    
-    // If tab is hidden, use background interval
-    if (!isTabVisible) {
-      return adaptiveIntervals.BACKGROUND;
-    }
-    
-    // Based on user activity recency
-    if (timeSinceActivity < USER_ACTIVITY_TIMEOUT) {
-      return adaptiveIntervals.ACTIVE;
-    } else if (timeSinceActivity < INACTIVE_TIMEOUT) {
-      return adaptiveIntervals.IDLE;
-    } else {
-      return adaptiveIntervals.INACTIVE;
-    }
-      }, [isTabVisible, adaptiveIntervals]);
-
-  // Update user activity timestamp
-  const updateActivity = useCallback(() => {
-    const now = new Date();
-    lastActivityRef.current = now;
-    setLastActivity(now);
-  }, []);
+  // Removed updateActivity as polling is disabled
 
   const refreshData = useCallback(async (showRefreshState = false) => {
     if (!isAuthenticated) {
@@ -156,88 +46,91 @@ export function WebsitesList() {
     }
   }, [fetchJobs, isAuthenticated, clearJobs]);
 
-  // Initial data load
+  // Initial data load - only run once when component mounts
   useEffect(() => {
+    let isMounted = true;
+    
     const loadJobs = async () => {
       if (!isAuthenticated) {
         clearJobs();
-        setIsInitialLoad(false);
+        if (isMounted) setIsInitialLoad(false);
         return;
       }
       
       try {
         await fetchJobs();
-        setLastUpdated(new Date());
+        if (isMounted) setLastUpdated(new Date());
       } catch (error) {
         console.error('Failed to fetch jobs:', error);
       } finally {
-        setIsInitialLoad(false);
+        if (isMounted) setIsInitialLoad(false);
       }
     };
 
-    loadJobs();
-  }, [fetchJobs, isAuthenticated, clearJobs]);
+    // Only load on initial mount, not on every auth/function change
+    if (isInitialLoad) {
+      loadJobs();
+    }
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated]); // Removed fetchJobs and clearJobs dependencies
 
-  // Tab visibility detection
+  // Tab visibility detection - with throttling to prevent excessive calls
   useEffect(() => {
+    let throttleTimeout: NodeJS.Timeout | null = null;
+    
     const handleVisibilityChange = () => {
       const isVisible = !document.hidden;
       setIsTabVisible(isVisible);
       
-      if (isVisible) {
-        // Tab became visible - update activity and refresh immediately
-        updateActivity();
-        refreshData(false);
+      if (isVisible && isAuthenticated) {
+        // Throttle API calls - only refresh if more than 30 seconds since last update
+        const now = new Date();
+        const timeSinceUpdate = lastUpdated ? now.getTime() - lastUpdated.getTime() : Infinity;
+        
+        if (timeSinceUpdate > 30000) { // 30 seconds throttle
+          // Clear any existing throttle
+          if (throttleTimeout) {
+            clearTimeout(throttleTimeout);
+          }
+          
+          // Throttle the refresh to avoid rapid-fire calls
+          throttleTimeout = setTimeout(() => {
+            refreshData(false);
+          }, 1000); // 1 second delay
+        }
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [updateActivity, refreshData]);
-
-  // User activity detection
-  useEffect(() => {
-    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-    
-    const handleActivity = () => {
-      updateActivity();
-    };
-
-    // Add listeners to detect user activity
-    activityEvents.forEach(event => {
-      document.addEventListener(event, handleActivity, { passive: true });
-    });
-
     return () => {
-      activityEvents.forEach(event => {
-        document.removeEventListener(event, handleActivity);
-      });
-    };
-  }, [updateActivity]);
-
-  // Memoize handleManualRefresh to avoid recreating on every render
-  const handleManualRefresh = useCallback(() => {
-    refreshData(true);
-  }, [refreshData]);
-
-  // Smart polling with dynamic intervals - DISABLED to reduce backend load
-  // Users can manually refresh data when needed
-  useEffect(() => {
-    if (isInitialLoad) return;
-
-    // Polling is disabled - data only refreshes:
-    // 1. On initial page load
-    // 2. When user manually clicks refresh
-    // 3. When tab becomes visible (if user was away)
-    
-    console.log(`🔄 Auto-polling disabled - data refreshes manually only`);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (throttleTimeout) {
+        clearTimeout(throttleTimeout);
       }
     };
-  }, [isInitialLoad]);
+  }, [isAuthenticated, lastUpdated]); // Removed refreshData dependency
+
+  // Removed user activity detection as polling is disabled
+
+  // Manual refresh - directly call fetchJobs to avoid dependencies
+  const handleManualRefresh = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
+    setIsRefreshing(true);
+    try {
+      await fetchJobs();
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Manual refresh failed:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [fetchJobs, isAuthenticated]);
+
+  // All auto-polling removed to prevent excessive API calls
 
   // Polling re-evaluation disabled since auto-polling is turned off
   // Data refreshes only on manual refresh or tab visibility change
@@ -258,46 +151,7 @@ export function WebsitesList() {
     }
   };
 
-  // Get current polling mode for display
-  const getPollingModeDisplay = () => {
-    const now = new Date();
-    const timeSinceActivity = now.getTime() - lastActivityRef.current.getTime();
-    
-    const formatInterval = (ms: number) => {
-      const seconds = ms / 1000;
-      if (seconds < 60) return `${seconds}s`;
-      const minutes = seconds / 60;
-      if (minutes < 60) return `${Math.round(minutes)}m`;
-      const hours = minutes / 60;
-      return `${Math.round(hours)}h`;
-    };
-    
-    if (!isTabVisible) {
-      return { 
-        mode: 'Background', 
-        color: 'text-yellow-600 dark:text-yellow-400', 
-        interval: formatInterval(adaptiveIntervals.BACKGROUND) 
-      };
-    } else if (timeSinceActivity < USER_ACTIVITY_TIMEOUT) {
-      return { 
-        mode: 'Active', 
-        color: 'text-green-600 dark:text-green-400', 
-        interval: formatInterval(adaptiveIntervals.ACTIVE) 
-      };
-    } else if (timeSinceActivity < INACTIVE_TIMEOUT) {
-      return { 
-        mode: 'Idle', 
-        color: 'text-blue-600 dark:text-blue-400', 
-        interval: formatInterval(adaptiveIntervals.IDLE) 
-      };
-    } else {
-      return { 
-        mode: 'Inactive', 
-        color: 'text-gray-600 dark:text-gray-400', 
-        interval: formatInterval(adaptiveIntervals.INACTIVE) 
-      };
-    }
-  };
+  // Polling mode display removed since auto-polling is disabled
 
   if (isInitialLoad || isLoading) {
     return (
@@ -377,12 +231,6 @@ export function WebsitesList() {
               {lastUpdated && (
                 <span className="text-gray-500 dark:text-gray-400">
                   {formatLastUpdated(lastUpdated)}
-                </span>
-              )}
-              {!isInitialLoad && (
-                <span className={`flex items-center gap-1 ${getPollingModeDisplay().color}`}>
-                  <div className="w-2 h-2 rounded-full bg-current animate-pulse"></div>
-                  {getPollingModeDisplay().mode} polling ({getPollingModeDisplay().interval})
                 </span>
               )}
             </div>

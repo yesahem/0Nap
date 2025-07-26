@@ -67,9 +67,11 @@ export const useJobStore = create<JobStore>((set, get) => ({
       
       set({ jobs, isLoading: false });
     } catch (error: unknown) {
-      const errorMessage = (error && typeof error === 'object' && 'response' in error) 
-        ? ((error as Record<string, any>).response?.data?.error || (error as Record<string, any>).message) 
-        : 'Failed to fetch jobs';
+      let errorMessage = 'Failed to fetch jobs';
+      if (error && typeof error === 'object') {
+        const err = error as { response?: { data?: { error?: string } }; message?: string };
+        errorMessage = err.response?.data?.error || err.message || 'Failed to fetch jobs';
+      }
       set({ error: errorMessage, isLoading: false });
       throw error;
     }
@@ -109,9 +111,11 @@ export const useJobStore = create<JobStore>((set, get) => ({
         isLoading: false,
       }));
     } catch (error: unknown) {
-      const errorMessage = (error && typeof error === 'object' && 'response' in error) 
-        ? ((error as Record<string, any>).response?.data?.error || (error as Record<string, any>).message) 
-        : 'Failed to add job';
+      let errorMessage = 'Failed to add job';
+      if (error && typeof error === 'object') {
+        const err = error as { response?: { data?: { error?: string } }; message?: string };
+        errorMessage = err.response?.data?.error || err.message || 'Failed to add job';
+      }
       set({ error: errorMessage, isLoading: false });
       throw error;
     }
@@ -129,9 +133,11 @@ export const useJobStore = create<JobStore>((set, get) => ({
         isLoading: false,
       }));
     } catch (error: unknown) {
-      const errorMessage = (error && typeof error === 'object' && 'response' in error) 
-        ? ((error as Record<string, any>).response?.data?.message || (error as Record<string, any>).message) 
-        : 'Failed to delete job';
+      let errorMessage = 'Failed to delete job';
+      if (error && typeof error === 'object') {
+        const err = error as { response?: { data?: { error?: string } }; message?: string };
+        errorMessage = err.response?.data?.error || err.message || 'Failed to delete job';
+      }
       set({ error: errorMessage, isLoading: false });
       throw error;
     }

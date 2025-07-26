@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { User, AuthState, SignInCredentials, SignUpCredentials } from '@/types/auth';
+import { AuthState, SignInCredentials, SignUpCredentials } from '@/types/auth';
 import { authApi } from '@/services/api';
 
 interface AuthStore extends AuthState {
@@ -58,10 +58,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isLoading: false,
         error: null,
       });
-    } catch (error: unknown) {
-      const errorMessage = (error && typeof error === 'object' && 'response' in error) 
-        ? ((error as Record<string, any>).response?.data?.error || (error as Record<string, any>).message) 
-        : 'Sign in failed';
+            } catch (error: unknown) {
+          let errorMessage = 'Sign in failed';
+          if (error && typeof error === 'object') {
+            const err = error as { response?: { data?: { error?: string } }; message?: string };
+            errorMessage = err.response?.data?.error || err.message || 'Sign in failed';
+          }
       set({
         isLoading: false,
         error: errorMessage,
@@ -100,10 +102,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         isLoading: false,
         error: null,
       });
-    } catch (error: unknown) {
-      const errorMessage = (error && typeof error === 'object' && 'response' in error) 
-        ? ((error as Record<string, any>).response?.data?.error || (error as Record<string, any>).message) 
-        : 'Sign up failed';
+          } catch (error: unknown) {
+        let errorMessage = 'Sign up failed';
+        if (error && typeof error === 'object') {
+          const err = error as { response?: { data?: { error?: string } }; message?: string };
+          errorMessage = err.response?.data?.error || err.message || 'Sign up failed';
+        }
       set({
         isLoading: false,
         error: errorMessage,
