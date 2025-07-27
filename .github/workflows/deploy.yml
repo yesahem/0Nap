@@ -36,10 +36,10 @@ jobs:
             username: ${{ secrets.SSH_HOSTNAME }}
             key: ${{ secrets.SSH_KEY }}
             script: |
-              sudo docker rmi shishuranjan/0nap-backend:latest || true
-              sudo docker pull shishuranjan/0nap-backend:latest
               sudo docker stop 0nap-backend || true
               sudo docker rm 0nap-backend || true
+              sudo docker rmi shishuranjan/0nap-backend:latest || true
+              sudo docker pull shishuranjan/0nap-backend:latest
               sudo docker run -d \
                 -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
                 -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
