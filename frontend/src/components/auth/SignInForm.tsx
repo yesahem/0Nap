@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, LogIn, Mail, Lock, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { SignInCredentials } from '@/types/auth';
+import { loginSchema } from '@/utils/validationSchemas';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -27,22 +28,27 @@ export function SignInForm() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!credentials.email) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(credentials.email)) {
-      errors.email = 'Please enter a valid email';
+    try {
+      loginSchema.parse(credentials);
+      setValidationErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof Error && 'issues' in error) {
+        const zodError = error as any;
+        const errors: Record<string, string> = {};
+        
+        zodError.issues.forEach((issue: any) => {
+          const field = issue.path[0];
+          if (field) {
+            errors[field] = issue.message;
+          }
+        });
+        
+        setValidationErrors(errors);
+        return false;
+      }
+      return false;
     }
-
-    if (!credentials.password) {
-      errors.password = 'Password is required';
-    } else if (credentials.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

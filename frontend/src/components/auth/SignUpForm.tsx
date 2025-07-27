@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, UserPlus, Mail, Lock, User, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { SignUpCredentials } from '@/types/auth';
+import { registerSchema, RegisterFormData } from '@/utils/validationSchemas';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -30,34 +31,27 @@ export function SignUpForm() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!credentials.fullName.trim()) {
-      errors.fullName = 'Name is required';
-    } else if (credentials.fullName.trim().length < 2) {
-      errors.fullName = 'Name must be at least 2 characters';
+    try {
+      registerSchema.parse(credentials);
+      setValidationErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof Error && 'issues' in error) {
+        const zodError = error as any;
+        const errors: Record<string, string> = {};
+        
+        zodError.issues.forEach((issue: any) => {
+          const field = issue.path[0];
+          if (field) {
+            errors[field] = issue.message;
+          }
+        });
+        
+        setValidationErrors(errors);
+        return false;
+      }
+      return false;
     }
-
-    if (!credentials.email) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(credentials.email)) {
-      errors.email = 'Please enter a valid email';
-    }
-
-    if (!credentials.password) {
-      errors.password = 'Password is required';
-    } else if (credentials.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
-    }
-
-    if (!credentials.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
-    } else if (credentials.password !== credentials.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

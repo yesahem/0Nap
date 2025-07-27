@@ -66,7 +66,7 @@ export function LandingPage() {
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-sm text-gray-400 dark:text-gray-500">
                 <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="https://forms.gle/XoXBb8GHjgNWkDWd8" target="_blank" className="hover:text-white transition-colors">Contact</a></li>
               </ul>
             </div>
             
