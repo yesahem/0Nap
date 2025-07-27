@@ -8,7 +8,13 @@ import { scheduleAll } from "./services/schedulerService.js";
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://0nap.shishuranjan.online'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
 app.use(express.json());
 
 const limiter = rateLimit({
