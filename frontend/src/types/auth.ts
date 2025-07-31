@@ -17,6 +17,7 @@ export interface AuthState {
 export interface SignInCredentials {
   email: string;
   password: string;
+  captchaToken?: string;
 }
 
 export interface SignUpCredentials {
@@ -24,6 +25,7 @@ export interface SignUpCredentials {
   email: string;
   password: string;
   confirmPassword: string;
+  captchaToken?: string;
 }
 
 export interface AuthResponse {

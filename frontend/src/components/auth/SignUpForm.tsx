@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Turnstile } from '@/components/ui/turnstile';
 
 export function SignUpForm() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [captchaToken, setCaptchaToken] = useState<string>('');
 
   const validateForm = (): boolean => {
     try {
@@ -61,10 +63,15 @@ export function SignUpForm() {
       return;
     }
 
+    if (!captchaToken) {
+      toast.error('Please complete the CAPTCHA verification.');
+      return;
+    }
+
     clearError();
 
     try {
-      await signUp(credentials);
+      await signUp({ ...credentials, captchaToken });
       toast.success('Account created successfully! Welcome to 0Nap!');
       router.push('/dashboard');
     } catch {
@@ -250,6 +257,35 @@ export function SignUpForm() {
                 >
                   {validationErrors.confirmPassword}
                 </motion.p>
+              )}
+            </div>
+
+            {/* CAPTCHA */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">
+                Security Verification
+              </Label>
+              {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? (
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                  onVerify={(token) => setCaptchaToken(token)}
+                  onError={() => {
+                    setCaptchaToken('');
+                    toast.error('CAPTCHA verification failed. Please try again.');
+                  }}
+                  onExpire={() => {
+                    setCaptchaToken('');
+                    toast.warning('CAPTCHA expired. Please verify again.');
+                  }}
+                  theme="auto"
+                  className="w-full"
+                />
+              ) : (
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                  <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                    CAPTCHA is not configured. Please contact support.
+                  </p>
+                </div>
               )}
             </div>
 

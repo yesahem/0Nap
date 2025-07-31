@@ -20,6 +20,22 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="./favicon.ico" sizes='any'/>
+        {/* Cloudflare Turnstile CAPTCHA */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.onloadTurnstileCallback = function () {
+                // Turnstile is ready
+                console.log('Cloudflare Turnstile loaded successfully');
+              };
+            `,
+          }}
+        />
+        <script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback" 
+          async 
+          defer
+        />
       </head>
       <body className={inter.className}>
         <ThemeProvider
