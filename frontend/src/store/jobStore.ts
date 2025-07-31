@@ -31,14 +31,14 @@ export const useJobStore = create<JobStore>((set, get) => ({
       
       // Debug logging to check backend data format
       if (backendUrls.length > 0) {
-        console.log('🔍 Backend URL sample:', {
-          createdAt: backendUrls[0].createdAt,
-          interval: backendUrls[0].interval,
-          type_createdAt: typeof backendUrls[0].createdAt,
-          type_interval: typeof backendUrls[0].interval,
-          isNaN_interval: isNaN(Number(backendUrls[0].interval)),
-          converted_interval: minutesToInterval(backendUrls[0].interval),
-        });
+        // console.log('🔍 Backend URL sample:', {
+        //   createdAt: backendUrls[0].createdAt,
+        //   interval: backendUrls[0].interval,
+        //   type_createdAt: typeof backendUrls[0].createdAt,
+        //   type_interval: typeof backendUrls[0].interval,
+        //   isNaN_interval: isNaN(Number(backendUrls[0].interval)),
+        //   converted_interval: minutesToInterval(backendUrls[0].interval),
+        // });
       }
       
       // Transform backend URLs to frontend Job format

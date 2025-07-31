@@ -26,7 +26,7 @@ export default function RootLayout({
             __html: `
               window.onloadTurnstileCallback = function () {
                 // Turnstile is ready
-                console.log('Cloudflare Turnstile loaded successfully');
+                // console.log('Cloudflare Turnstile loaded successfully');
               };
             `,
           }}
